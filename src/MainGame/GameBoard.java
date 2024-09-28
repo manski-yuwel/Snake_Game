@@ -16,7 +16,9 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
     private Point food;
     private int direction = KeyEvent.VK_RIGHT;
     private boolean isGameOver = false;
+
     private Timer timer;
+    private int score = 0;
 
     public GameBoard() {
         this.snake = new ArrayList<>();
@@ -69,7 +71,13 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         }
 
         snake.add(0, newHead);
-        snake.remove(snake.size() - 1);
+
+        if (newHead.equals(food)) {
+            food = generateFood();
+            score+=10;
+        } else {
+            snake.remove(snake.size() - 1);
+        }
     }
 
 
