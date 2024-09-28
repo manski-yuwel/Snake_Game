@@ -20,10 +20,12 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
     private Timer timer;
     private int score = 0;
 
-    public GameBoard() {
+    private ScorePanel scorePanel;
+
+    public GameBoard(ScorePanel scorePanel) {
+        this.scorePanel = scorePanel;
         this.snake = new ArrayList<>();
         this.snake.add(new Point(50, 50));
-
         this.food = generateFood();
 
         this.timer = new Timer(100, this);
@@ -31,6 +33,8 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
 
         setFocusable(true);
         addKeyListener(this);
+
+        setBackground(new Color(34, 139, 34));
     }
 
     @Override
@@ -46,8 +50,18 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         g.fillRect(food.x, food.y, BLOCK_SIZE, BLOCK_SIZE);
 
         if (isGameOver) {
-            g.setColor(Color.RED);
-            g.drawString("Game Over", 50, 50);
+            g.setColor(Color.BLACK);
+            String gameOverText = "Game Over";
+            g.setFont(new Font("Helvetica", Font.BOLD, 30));
+
+            FontMetrics fm = g.getFontMetrics();
+            int textWidth = fm.stringWidth(gameOverText);
+            int textHeight = fm.getHeight();
+
+            int x = (getWidth() - textWidth) / 2;
+            int y = (getHeight() - textHeight) / 2;
+
+            g.drawString(gameOverText, x, y);
         }
     }
 
@@ -75,6 +89,7 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         if (newHead.equals(food)) {
             food = generateFood();
             score+=10;
+            scorePanel.updateScore(score);
         } else {
             snake.remove(snake.size() - 1);
         }

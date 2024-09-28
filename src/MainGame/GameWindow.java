@@ -18,11 +18,11 @@ public class GameWindow {
 
         window.setLayout(new BorderLayout());
 
-        GameBoard gameBoard = new GameBoard();
-        window.add(gameBoard, BorderLayout.CENTER);
-
-        JPanel scorePanel = new JPanel();
+        ScorePanel  scorePanel = new ScorePanel();
         window.add(scorePanel, BorderLayout.NORTH);
+
+        GameBoard gameBoard = new GameBoard(scorePanel);
+        window.add(gameBoard, BorderLayout.CENTER);
 
         window.setVisible(true);
     }
