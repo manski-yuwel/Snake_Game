@@ -1,19 +1,19 @@
 package MainGame;
 
-import javax.swing.JPanel;
-import javax.swing.Timer;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 public class GameBoard extends JPanel implements ActionListener, KeyListener {
 
     private final int BLOCK_SIZE = 10;
+    private final int BOARD_WIDTH = 80; // Number of blocks horizontally
+    private final int BOARD_HEIGHT = 50; // Number of blocks vertically
     private ArrayList<Point> snake;
     private Point food;
     private PowerUp powerUp;
@@ -31,14 +31,18 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
     private Color gameOverTextColor = Color.BLACK;
 
     private ScorePanel scorePanel;
+    private SettingsDialog settingsDialog;
 
     private long lastKeyPressTime = 0;
     private final int KEY_PRESS_DELAY = 80;
 
     private Random random = new Random();
 
-    public GameBoard(ScorePanel scorePanel) {
+    public GameBoard(ScorePanel scorePanel, SettingsDialog settingsDialog) {
+        setPreferredSize(new Dimension(BOARD_WIDTH * BLOCK_SIZE, BOARD_HEIGHT * BLOCK_SIZE));
+
         this.scorePanel = scorePanel;
+        this.settingsDialog = this.settingsDialog;
         this.snake = new ArrayList<>();
         this.snake.add(new Point(50, 50));
         generateFoodOrPowerUp();
@@ -65,6 +69,12 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
             }
         });
         expirationTimer.setRepeats(false);
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        generateFoodOrPowerUp();
     }
 
     public void resetGame() {
@@ -144,6 +154,31 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         }
     }
 
+
+    private class RestartButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            resetGame();
+            requestFocusInWindow();
+        }
+    }
+
+    private class DifficultyButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String difficulty = settingsDialog.getSelectedDifficulty();
+            if ("Easy".equals(difficulty)) {
+                setTimerDelay(300);
+            } else if ("Medium".equals(difficulty)) {
+                setTimerDelay(150);
+            } else if ("Hard".equals(difficulty)) {
+                setTimerDelay(75);
+            }
+            resetGame();
+            requestFocusInWindow();
+        }
+    }
+
     private void moveSnake() {
         Point head = snake.get(0);
         Point newHead = new Point(head);
@@ -163,6 +198,26 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
                 break;
         }
 
+        int maxX = getWidth();
+        int maxY = getHeight();
+
+        if (newHead.x < 0) {
+            newHead.x = maxX - BLOCK_SIZE;
+        } else if (newHead.x >= maxX) {
+            newHead.x = 0;
+        }
+        if (newHead.y < 0) {
+            newHead.y = maxY - BLOCK_SIZE;
+        } else if (newHead.y >= maxY) {
+            newHead.y = 0;
+        }
+        int gridX = (newHead.x / BLOCK_SIZE + BOARD_WIDTH) % BOARD_WIDTH;
+        int gridY = (newHead.y / BLOCK_SIZE + BOARD_HEIGHT) % BOARD_HEIGHT;
+
+        // Convert back to pixel positions
+        newHead.x = gridX * BLOCK_SIZE;
+        newHead.y = gridY * BLOCK_SIZE;
+
         snake.add(0, newHead);
 
         if (newHead.equals(food)) {
@@ -176,14 +231,15 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         } else {
             snake.remove(snake.size() - 1);
         }
+
     }
 
     private void generateFoodOrPowerUp() {
         // Define the boundaries for spawning based on the window size
-        int minX = 0; // Minimum x-coordinate (in pixels)
-        int minY = 0; // Minimum y-coordinate (in pixels)
-        int maxX = 500 - BLOCK_SIZE; // Maximum x-coordinate (in pixels)
-        int maxY = 500 - BLOCK_SIZE; // Maximum y-coordinate (in pixels)
+        int minX = 0;
+        int minY = 0;
+        int maxX = getWidth() - BLOCK_SIZE;
+        int maxY = getHeight() - BLOCK_SIZE;
 
         int x = 0, y = 0;
         int attempts = 0;
@@ -303,14 +359,6 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
     private void checkCollision() {
         Point head = snake.get(0);
 
-        if (head.x < 0 || head.x >= getWidth() || head.y < 0 || head.y >= getHeight()) {
-            isGameOver = true;
-            powerUp = null;
-            timer.stop();
-            scorePanel.checkHighScore();
-            startGameOverColorChangeTimer();
-        }
-
         for (int i = 1; i < snake.size(); i++) {
             if (head.equals(snake.get(i))) {
                 isGameOver = true;
@@ -364,7 +412,13 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
             direction = KeyEvent.VK_RIGHT;
         } else if (key == KeyEvent.VK_SPACE && isGameOver) {
             resetGame();
-        }
+        } else // Trigger settings dialog
+            if (key == KeyEvent.VK_ESCAPE) SwingUtilities.invokeLater(() -> {
+                if (settingsDialog == null) {
+                    settingsDialog = new SettingsDialog((JFrame) SwingUtilities.getWindowAncestor(this), new RestartButtonListener(), new DifficultyButtonListener());
+                }
+                settingsDialog.setVisible(true);
+            });
     }
 
     @Override

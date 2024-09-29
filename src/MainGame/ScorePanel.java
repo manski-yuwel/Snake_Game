@@ -2,7 +2,7 @@ package MainGame;
 
 import javax.swing.JPanel;
 import javax.swing.JLabel;
-import java.awt.FlowLayout;
+import java.awt.GridLayout;
 
 public class ScorePanel extends JPanel {
 
@@ -13,14 +13,15 @@ public class ScorePanel extends JPanel {
     private int highScore = 0;
 
     public ScorePanel() {
-        setLayout(new FlowLayout(FlowLayout.LEFT));
+        setLayout(new GridLayout(1, 3)); // 1 row, 3 columns
 
-        scoreLabel = new JLabel("Score: " + score);
-        highScoreLabel = new JLabel("High Score: " + highScore);
-        powerUpLabel = new JLabel("Power Up: None");
+        powerUpLabel = new JLabel("Power Up: None", JLabel.CENTER);
+        scoreLabel = new JLabel("Score: " + score, JLabel.CENTER);
+        highScoreLabel = new JLabel("High Score: " + highScore, JLabel.CENTER);
+
+        add(powerUpLabel);
         add(scoreLabel);
         add(highScoreLabel);
-        add(powerUpLabel);
     }
 
     public void updateScore(int newScore) {
@@ -46,5 +47,4 @@ public class ScorePanel extends JPanel {
     public int getHighScore() {
         return highScore;
     }
-
 }

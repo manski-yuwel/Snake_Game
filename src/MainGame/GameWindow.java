@@ -1,83 +1,83 @@
 package MainGame;
 
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.ImageIcon;
-import java.awt.BorderLayout;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-
 public class GameWindow {
+    private JFrame window;
     private GameBoard gameBoard;
-    public GameWindow() {
+    private MenuPanel menuPanel;
+    private SettingsDialog settingsDialog;
 
-        JFrame window = new JFrame("Snake Game");
+    public GameWindow() {
+        window = new JFrame("Snake Game");
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setSize(800, 600);
         window.setResizable(true);
         window.setLayout(new BorderLayout());
 
-        ScorePanel scorePanel = new ScorePanel();
-        window.add(scorePanel, BorderLayout.NORTH);
+        menuPanel = new MenuPanel(new StartButtonListener(), new SettingsButtonListener());
+        window.add(menuPanel, BorderLayout.CENTER);
 
-        gameBoard = new GameBoard(scorePanel); // Initialize gameBoard and assign to class member
-        window.add(gameBoard, BorderLayout.CENTER);
-
-        JPanel controlPanel = new JPanel();
-        JButton restartButton = new JButton("Restart");
-        restartButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                restartGame();
-            }
-        });
-
-        JButton easyButton = new JButton("Easy");
-        easyButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                setDifficulty(300);
-            }
-        });
-
-        JButton mediumButton = new JButton("Medium");
-        mediumButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                setDifficulty(150);
-            }
-        });
-
-        JButton hardButton = new JButton("Hard");
-        hardButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                setDifficulty(75);
-            }
-        });
-
-        controlPanel.add(restartButton);
-        controlPanel.add(easyButton);
-        controlPanel.add(mediumButton);
-        controlPanel.add(hardButton);
-
-        window.add(controlPanel, BorderLayout.SOUTH);
-
+        window.pack();
         window.setVisible(true);
     }
 
-    private void restartGame() {
-        gameBoard.resetGame();
-        gameBoard.requestFocusInWindow();
+    private class StartButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            window.remove(menuPanel);
+            ScorePanel scorePanel = new ScorePanel();
+            if (settingsDialog == null) {
+                settingsDialog = new SettingsDialog(window, new RestartButtonListener(), new DifficultyButtonListener());
+            }
+            gameBoard = new GameBoard(scorePanel, settingsDialog);
+            window.add(scorePanel, BorderLayout.NORTH);
+            window.add(gameBoard, BorderLayout.CENTER);
+            window.revalidate();
+            window.repaint();
+            gameBoard.requestFocusInWindow();
+        }
     }
 
-    private void setDifficulty(int delay) {
-        gameBoard.setTimerDelay(delay);
-        gameBoard.resetGame();
-        gameBoard.requestFocusInWindow();
+    private class SettingsButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (settingsDialog == null) {
+                settingsDialog = new SettingsDialog(window, new RestartButtonListener(), new DifficultyButtonListener());
+            }
+            settingsDialog.setVisible(true);
+        }
+    }
+
+    private class RestartButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (gameBoard != null) {
+                gameBoard.resetGame();
+                gameBoard.requestFocusInWindow();
+            }
+        }
+    }
+
+    private class DifficultyButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (gameBoard != null) {
+                String difficulty = settingsDialog.getSelectedDifficulty();
+                if ("Easy".equals(difficulty)) {
+                    gameBoard.setTimerDelay(300);
+                } else if ("Medium".equals(difficulty)) {
+                    gameBoard.setTimerDelay(150);
+                } else if ("Hard".equals(difficulty)) {
+                    gameBoard.setTimerDelay(75);
+                }
+                gameBoard.resetGame();
+                gameBoard.requestFocusInWindow();
+            }
+        }
     }
 
     public static void main(String[] args) {
