@@ -17,7 +17,7 @@ public class GameWindow {
         JFrame window = new JFrame("Snake Game");
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setSize(800, 600);
-        window.setResizable(false);
+        window.setResizable(true);
         window.setLayout(new BorderLayout());
 
         ScorePanel scorePanel = new ScorePanel();
