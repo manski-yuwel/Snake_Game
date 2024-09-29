@@ -22,6 +22,9 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
 
     private ScorePanel scorePanel;
 
+    private long lastKeyPressTime = 0;
+    private final int KEY_PRESS_DELAY = 80;
+
     public GameBoard(ScorePanel scorePanel) {
         this.scorePanel = scorePanel;
         this.snake = new ArrayList<>();
@@ -35,6 +38,22 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         addKeyListener(this);
 
         setBackground(new Color(34, 139, 34));
+    }
+
+    public void resetGame() {
+        this.snake.clear();
+        this.snake.add(new Point(50, 50));
+        this.food = generateFood();
+        this.direction = KeyEvent.VK_RIGHT;
+        this.isGameOver = false;
+        this.score = 0;
+        scorePanel.updateScore(score);
+        timer.start();
+        repaint();
+    }
+
+    public void setTimerDelay(int delay) {
+        timer.setDelay(delay);
     }
 
     @Override
@@ -88,36 +107,38 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
 
         if (newHead.equals(food)) {
             food = generateFood();
-            score+=10;
+            score += 10;
             scorePanel.updateScore(score);
         } else {
             snake.remove(snake.size() - 1);
         }
     }
 
-
     private Point generateFood() {
-        int x = (int) (Math.random() * 80) * BLOCK_SIZE;
-        int y = (int) (Math.random() * 60) * BLOCK_SIZE;
+        int maxX = (getWidth() / BLOCK_SIZE) - 1;
+        int maxY = (getHeight() / BLOCK_SIZE) - 1;
+        int x, y;
+        do {
+            x = (int) (Math.random() * maxX) * BLOCK_SIZE;
+            y = (int) (Math.random() * maxY) * BLOCK_SIZE;
+        } while (snake.contains(new Point(x, y)));
         return new Point(x, y);
     }
 
-
-    // check for collision with walls
     private void checkCollision() {
         Point head = snake.get(0);
 
-        // check for snake collission
         if (head.x < 0 || head.x >= getWidth() || head.y < 0 || head.y >= getHeight()) {
             isGameOver = true;
             timer.stop();
+            scorePanel.checkHighScore();
         }
 
-        // check for snake consumption
         for (int i = 1; i < snake.size(); i++) {
             if (head.equals(snake.get(i))) {
                 isGameOver = true;
-                timer.stop();;
+                timer.stop();
+                scorePanel.checkHighScore();
             }
         }
     }
@@ -133,25 +154,29 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
 
     @Override
     public void keyTyped(KeyEvent e) {
-
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
-    int key = e.getKeyCode();
-            if (key == KeyEvent.VK_UP && direction != KeyEvent.VK_DOWN) {
-                direction = KeyEvent.VK_UP;
-            } else if (key == KeyEvent.VK_DOWN && direction != KeyEvent.VK_UP) {
-                direction = KeyEvent.VK_DOWN;
-            } else if (key == KeyEvent.VK_LEFT && direction != KeyEvent.VK_RIGHT) {
-                direction = KeyEvent.VK_LEFT;
-            } else if (key == KeyEvent.VK_RIGHT && direction != KeyEvent.VK_LEFT) {
-                direction = KeyEvent.VK_RIGHT;
-            }
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastKeyPressTime < KEY_PRESS_DELAY) {
+            return; // Ignore key press if within delay period
+        }
+        lastKeyPressTime = currentTime;
+
+        int key = e.getKeyCode();
+        if (key == KeyEvent.VK_UP && direction != KeyEvent.VK_DOWN) {
+            direction = KeyEvent.VK_UP;
+        } else if (key == KeyEvent.VK_DOWN && direction != KeyEvent.VK_UP) {
+            direction = KeyEvent.VK_DOWN;
+        } else if (key == KeyEvent.VK_LEFT && direction != KeyEvent.VK_RIGHT) {
+            direction = KeyEvent.VK_LEFT;
+        } else if (key == KeyEvent.VK_RIGHT && direction != KeyEvent.VK_LEFT) {
+            direction = KeyEvent.VK_RIGHT;
+        }
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
-
     }
 }
