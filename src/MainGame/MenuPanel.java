@@ -58,5 +58,26 @@ public class MenuPanel extends JPanel {
         settingsButton.addActionListener(settingsListener);
         gbc.gridy = 4; // Move settings button to row 4
         add(settingsButton, gbc);
+
+        // Invert colors
+        invertColors();
+    }
+
+    private void invertColors() {
+        setBackground(invertColor(getBackground()));
+        for (Component component : getComponents()) {
+            if (component instanceof JLabel) {
+                JLabel label = (JLabel) component;
+                label.setForeground(invertColor(label.getForeground()));
+            } else if (component instanceof JButton) {
+                JButton button = (JButton) component;
+                button.setBackground(invertColor(button.getBackground()));
+                button.setForeground(invertColor(button.getForeground()));
+            }
+        }
+    }
+
+    private Color invertColor(Color color) {
+        return new Color(255 - color.getRed(), 255 - color.getGreen(), 255 - color.getBlue());
     }
 }

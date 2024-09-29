@@ -27,8 +27,8 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
     private Timer gameOverColorChangeTimer;
     private int score = 0;
     private boolean doublePointsActive = false;
-    private Color snakeColor = Color.GREEN;
     private Color gameOverTextColor = Color.BLACK;
+    private Color snakeColor;
 
     private ScorePanel scorePanel;
     private SettingsDialog settingsDialog;
@@ -41,8 +41,8 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
     public GameBoard(ScorePanel scorePanel, SettingsDialog settingsDialog) {
         setPreferredSize(new Dimension(BOARD_WIDTH * BLOCK_SIZE, BOARD_HEIGHT * BLOCK_SIZE));
 
+        this.snakeColor = Color.GREEN;
         this.scorePanel = scorePanel;
-        this.settingsDialog = this.settingsDialog;
         this.snake = new ArrayList<>();
         this.snake.add(new Point(50, 50));
         generateFoodOrPowerUp();
@@ -53,7 +53,7 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         setFocusable(true);
         addKeyListener(this);
 
-        setBackground(new Color(34, 139, 34));
+        setBackground(new Color(20, 20, 20));
 
         expirationTimer = new Timer(9000, new ActionListener() {
             @Override
@@ -115,6 +115,15 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
+        // Draw grid lines
+        g.setColor(new Color(30,30,30));
+        for (int i = 0; i <= getWidth(); i += BLOCK_SIZE) {
+            g.drawLine(i, 0, i, getHeight());
+        }
+        for (int i = 0; i <= getHeight(); i += BLOCK_SIZE) {
+            g.drawLine(0, i, getWidth(), i);
+        }
+
         // Draw the snake
         if (snake != null) {
             g.setColor(snakeColor);
@@ -151,6 +160,7 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
             int y = (getHeight() - textHeight) / 2;
 
             g.drawString(gameOverText, x, y);
+            expirationTimer.start();
         }
     }
 
@@ -198,25 +208,18 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
                 break;
         }
 
-        int maxX = getWidth();
-        int maxY = getHeight();
-
+        // Handle wrapping around based on the number of blocks (not pixels)
         if (newHead.x < 0) {
-            newHead.x = maxX - BLOCK_SIZE;
-        } else if (newHead.x >= maxX) {
-            newHead.x = 0;
+            newHead.x = (BOARD_WIDTH - 1) * BLOCK_SIZE; // Wrap to the rightmost block
+        } else if (newHead.x >= BOARD_WIDTH * BLOCK_SIZE) {
+            newHead.x = 0; // Wrap to the leftmost block
         }
-        if (newHead.y < 0) {
-            newHead.y = maxY - BLOCK_SIZE;
-        } else if (newHead.y >= maxY) {
-            newHead.y = 0;
-        }
-        int gridX = (newHead.x / BLOCK_SIZE + BOARD_WIDTH) % BOARD_WIDTH;
-        int gridY = (newHead.y / BLOCK_SIZE + BOARD_HEIGHT) % BOARD_HEIGHT;
 
-        // Convert back to pixel positions
-        newHead.x = gridX * BLOCK_SIZE;
-        newHead.y = gridY * BLOCK_SIZE;
+        if (newHead.y < 0) {
+            newHead.y = (BOARD_HEIGHT - 1) * BLOCK_SIZE; // Wrap to the bottom block
+        } else if (newHead.y >= BOARD_HEIGHT * BLOCK_SIZE) {
+            newHead.y = 0; // Wrap to the top block
+        }
 
         snake.add(0, newHead);
 
@@ -231,7 +234,6 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         } else {
             snake.remove(snake.size() - 1);
         }
-
     }
 
     private void generateFoodOrPowerUp() {
@@ -388,6 +390,10 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
             repaint();
         }
     }
+    public void setSnakeColor(Color color) {
+        this.snakeColor = color;
+        repaint();
+    }
 
     @Override
     public void keyTyped(KeyEvent e) {
@@ -410,15 +416,30 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
             direction = KeyEvent.VK_LEFT;
         } else if (key == KeyEvent.VK_RIGHT && direction != KeyEvent.VK_LEFT) {
             direction = KeyEvent.VK_RIGHT;
+        } else if (key == KeyEvent.VK_W && direction != KeyEvent.VK_DOWN) {
+            direction = KeyEvent.VK_UP;
+        } else if (key == KeyEvent.VK_S && direction != KeyEvent.VK_UP) {
+            direction = KeyEvent.VK_DOWN;
+        } else if (key == KeyEvent.VK_A && direction != KeyEvent.VK_RIGHT) {
+            direction = KeyEvent.VK_LEFT;
+        } else if (key == KeyEvent.VK_D && direction != KeyEvent.VK_LEFT) {
+            direction = KeyEvent.VK_RIGHT;
         } else if (key == KeyEvent.VK_SPACE && isGameOver) {
             resetGame();
-        } else // Trigger settings dialog
-            if (key == KeyEvent.VK_ESCAPE) SwingUtilities.invokeLater(() -> {
+        } else if (key == KeyEvent.VK_ESCAPE) {
+            SwingUtilities.invokeLater(() -> {
                 if (settingsDialog == null) {
-                    settingsDialog = new SettingsDialog((JFrame) SwingUtilities.getWindowAncestor(this), new RestartButtonListener(), new DifficultyButtonListener());
+                    settingsDialog = new SettingsDialog((JFrame) SwingUtilities.getWindowAncestor(this), new RestartButtonListener(), new DifficultyButtonListener(), new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            snakeColor = settingsDialog.getSelectedColor();
+                            repaint();
+                        }
+                    });
                 }
                 settingsDialog.setVisible(true);
             });
+        }
     }
 
     @Override
