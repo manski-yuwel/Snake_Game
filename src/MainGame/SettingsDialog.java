@@ -13,6 +13,7 @@ public class SettingsDialog extends JDialog {
     private JButton restartButton;
     private ButtonGroup difficultyGroup;
 
+
     public SettingsDialog(JFrame parent, ActionListener restartListener, ActionListener difficultyListener, ActionListener colorChangeListener) {
         super(parent, "Settings", true);
         setLayout(new GridBagLayout());
@@ -94,6 +95,7 @@ public class SettingsDialog extends JDialog {
         easyButton.addActionListener(difficultyListener);
         mediumButton.addActionListener(difficultyListener);
         hardButton.addActionListener(difficultyListener);
+        easyButton.setSelected(true); // Default selection
 
         // Add action listener for color changes
         colorChooser.getSelectionModel().addChangeListener(e -> colorChangeListener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, null)));
@@ -107,6 +109,19 @@ public class SettingsDialog extends JDialog {
         getContentPane().setBackground(Color.BLACK);
     }
 
+    public void setSelectedDifficulty(String difficulty) {
+        switch (difficulty) {
+            case "Easy":
+                easyButton.setSelected(true);
+                break;
+            case "Medium":
+                mediumButton.setSelected(true);
+                break;
+            case "Hard":
+                hardButton.setSelected(true);
+                break;
+        }
+    }
     // Utility method to set dark mode for a component
     private void setComponentDarkMode(JComponent component, Color background, Color foreground) {
         component.setBackground(background);

@@ -32,23 +32,30 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
 
     private ScorePanel scorePanel;
     private SettingsDialog settingsDialog;
-    private GameBoard gameBoard;
-    private MenuPanel menuPanel;
     private ConfigManager configManager;
+
+    private String currentDifficulty = "Easy"; // Keep track of the current difficulty
+    private final int EASY_SPEED = 80;
+    private final int MEDIUM_SPEED = 50;
+    private final int HARD_SPEED = 30;
+    private String activePowerUpType = null; // Keep track of the active power-up
 
     private long lastKeyPressTime = 0;
     private final int KEY_PRESS_DELAY = 80;
 
     private Random random = new Random();
 
-    public GameBoard(ScorePanel scorePanel, SettingsDialog settingsDialog, MenuPanel menuPanel) {
+    public GameBoard(ScorePanel scorePanel, SettingsDialog settingsDialog) {
         setPreferredSize(new Dimension(BOARD_WIDTH * BLOCK_SIZE, BOARD_HEIGHT * BLOCK_SIZE));
 
         this.snakeColor = Color.GREEN;
         this.scorePanel = scorePanel;
-        this.settingsDialog = settingsDialog;
-        this.menuPanel = menuPanel;
-        this.gameBoard = this;
+        this.settingsDialog = new SettingsDialog(
+                (JFrame) SwingUtilities.getWindowAncestor(this),
+                new RestartButtonListener(),
+                new DifficultyButtonListener(),
+                new ColorChangeListener()
+        );
         this.configManager = new ConfigManager();
         this.snakeColor = configManager.getSnakeColor();
         scorePanel.checkHighScore(configManager.getHighScore());
@@ -57,7 +64,10 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         this.snake.add(new Point(50, 50));
         generateFoodOrPowerUp();
 
-        this.timer = new Timer(100, this);
+        // Initialize the game with the "Easy" speed
+        this.timer = new Timer(EASY_SPEED, this); // Start with "Easy" speed
+        currentDifficulty = "Easy"; // Set current difficulty to "Easy"
+
         timer.start();
 
         setFocusable(true);
@@ -88,9 +98,17 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
     }
 
     public void resetGame() {
+
+        // Stop the timer before changing the delay
+        timer.stop();
+
+        // Reset game state variables
+        if (activePowerUpType != null) {
+            resetPowerUpEffect(activePowerUpType);
+            activePowerUpType = null;
+        }
         this.snake.clear();
         this.snake.add(new Point(50, 50));
-        generateFoodOrPowerUp();
         this.direction = KeyEvent.VK_RIGHT;
         this.isGameOver = false;
         this.score = 0;
@@ -98,8 +116,14 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         this.powerUp = null;
         scorePanel.updateScore(score);
         scorePanel.updatePowerUp("None");
-        generateFoodOrPowerUp();
+
+        // Set speed based on the current difficulty
+        setSpeedForDifficulty();
+
+        // Start the timer
         timer.start();
+
+        // Stop other timers if necessary
         if (powerUpTimer != null) {
             powerUpTimer.stop();
         }
@@ -112,12 +136,34 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         if (gameOverColorChangeTimer != null) {
             gameOverColorChangeTimer.stop();
         }
+
+        // Generate new food or power-up and repaint
+        generateFoodOrPowerUp();
         repaint();
         scorePanel.checkHighScore(configManager.getHighScore());
     }
 
+    private void setSpeedForDifficulty() {
+        timer.stop();
+        // Set the speed based on the current difficulty
+        switch (currentDifficulty) {
+            case "Easy":
+                setTimerDelay(EASY_SPEED);
+                break;
+            case "Medium":
+                setTimerDelay(MEDIUM_SPEED);
+                break;
+            case "Hard":
+                setTimerDelay(HARD_SPEED);
+                break;
+        }
+
+        timer.start();
+    }
+
     public void setTimerDelay(int delay) {
         timer.setDelay(delay);
+        System.out.println("Timer delay set to: " + delay + " ms");
     }
 
     @Override
@@ -183,7 +229,6 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         }
     }
 
-
     private class RestartButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -195,16 +240,15 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
     private class DifficultyButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            String difficulty = settingsDialog.getSelectedDifficulty();
-            if ("Easy".equals(difficulty)) {
-                setTimerDelay(60);
-            } else if ("Medium".equals(difficulty)) {
-                setTimerDelay(40);
-            } else if ("Hard".equals(difficulty)) {
-                setTimerDelay(28);
+            String selectedDifficulty = settingsDialog.getSelectedDifficulty();
+            if (selectedDifficulty != null) {
+                currentDifficulty = selectedDifficulty;
+                System.out.println("Difficulty changed to: " + currentDifficulty);
+                resetGame();
+                requestFocusInWindow();
+            } else {
+                System.out.println("No difficulty selected.");
             }
-            resetGame();
-            requestFocusInWindow();
         }
     }
 
@@ -341,7 +385,14 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
     }
 
     private void applyPowerUpEffect(PowerUp powerUp) {
-        resetPowerUpEffect(powerUp);
+        // Reset the effect of any previously active power-up
+        if (activePowerUpType != null) {
+            resetPowerUpEffect(activePowerUpType);
+        }
+
+        // Set the new active power-up type
+        activePowerUpType = powerUp.getType();
+
         switch (powerUp.getType()) {
             case "speed":
                 timer.setDelay(timer.getDelay() / 2);
@@ -358,7 +409,8 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         powerUpTimer = new Timer(7000, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                resetPowerUpEffect(powerUp);
+                resetPowerUpEffect(activePowerUpType);
+                activePowerUpType = null; // Clear the active power-up
                 powerUpTimer.stop();
             }
         });
@@ -366,19 +418,18 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         powerUpTimer.start();
     }
 
-    private void resetPowerUpEffect(PowerUp powerUp) {
-        switch (powerUp.getType()) {
+    private void resetPowerUpEffect(String powerUpType) {
+        switch (powerUpType) {
             case "speed":
-                timer.setDelay(timer.getDelay() * 2);
+                setSpeedForDifficulty(); // Restore speed to the current difficulty setting
                 if (colorChangeTimer != null) {
                     colorChangeTimer.stop();
                 }
-                snakeColor = Color.GREEN;
+                snakeColor = configManager.getSnakeColor(); // Reset snake color to original
                 break;
             case "double_points":
                 doublePointsActive = false;
                 break;
-            // Reset other power-up types here
         }
         scorePanel.updatePowerUp("None");
     }
@@ -472,14 +523,7 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
             resetGame();
         } else if (key == KeyEvent.VK_ESCAPE) {
             SwingUtilities.invokeLater(() -> {
-                if (settingsDialog == null) {
-                    settingsDialog = new SettingsDialog(
-                            (JFrame) SwingUtilities.getWindowAncestor(this),
-                            new RestartButtonListener(),
-                            new DifficultyButtonListener(),
-                            new ColorChangeListener()
-                    );
-                }
+                settingsDialog.setSelectedDifficulty(currentDifficulty);
                 settingsDialog.setVisible(true);
             });
         }

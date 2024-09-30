@@ -45,7 +45,7 @@ public class GameWindow {
             if (settingsDialog == null) {
                 settingsDialog = new SettingsDialog(window, new RestartButtonListener(), new DifficultyButtonListener(), new ColorChangeListener());
             }
-            gameBoard = new GameBoard(scorePanel, settingsDialog, menuPanel);
+            gameBoard = new GameBoard(scorePanel, settingsDialog);
 
             // Add the game board and score panel to the window
             window.add(scorePanel, BorderLayout.NORTH);
@@ -99,11 +99,11 @@ public class GameWindow {
             if (gameBoard != null) {
                 String difficulty = settingsDialog.getSelectedDifficulty();
                 if ("Easy".equals(difficulty)) {
-                    gameBoard.setTimerDelay(300);
+                    gameBoard.setTimerDelay(80);
                 } else if ("Medium".equals(difficulty)) {
-                    gameBoard.setTimerDelay(150);
+                    gameBoard.setTimerDelay(50);
                 } else if ("Hard".equals(difficulty)) {
-                    gameBoard.setTimerDelay(75);
+                    gameBoard.setTimerDelay(30);
                 }
                 gameBoard.resetGame();
                 gameBoard.requestFocusInWindow();
