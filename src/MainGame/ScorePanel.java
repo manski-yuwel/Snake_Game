@@ -29,9 +29,12 @@ public class ScorePanel extends JPanel {
         scoreLabel.setText("Score: " + score);
     }
 
-    public void checkHighScore() {
+    public void checkHighScore(int configHighScore) {
         if (score > highScore) {
             highScore = score;
+            highScoreLabel.setText("High Score: " + highScore);
+        } else {
+            highScore = configHighScore;
             highScoreLabel.setText("High Score: " + highScore);
         }
     }

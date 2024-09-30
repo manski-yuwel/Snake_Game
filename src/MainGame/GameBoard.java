@@ -1,5 +1,5 @@
 package MainGame;
-
+import GameDependencies.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -34,6 +34,7 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
     private SettingsDialog settingsDialog;
     private GameBoard gameBoard;
     private MenuPanel menuPanel;
+    private ConfigManager configManager;
 
     private long lastKeyPressTime = 0;
     private final int KEY_PRESS_DELAY = 80;
@@ -48,6 +49,9 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         this.settingsDialog = settingsDialog;
         this.menuPanel = menuPanel;
         this.gameBoard = this;
+        this.configManager = new ConfigManager();
+        this.snakeColor = configManager.getSnakeColor();
+        scorePanel.checkHighScore(configManager.getHighScore());
 
         this.snake = new ArrayList<>();
         this.snake.add(new Point(50, 50));
@@ -91,12 +95,10 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         this.isGameOver = false;
         this.score = 0;
         this.doublePointsActive = false;
-        this.snakeColor = Color.GREEN;
         this.powerUp = null;
         scorePanel.updateScore(score);
         scorePanel.updatePowerUp("None");
         generateFoodOrPowerUp();
-        expirationTimer.start();
         timer.start();
         if (powerUpTimer != null) {
             powerUpTimer.stop();
@@ -111,6 +113,7 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
             gameOverColorChangeTimer.stop();
         }
         repaint();
+        scorePanel.checkHighScore(configManager.getHighScore());
     }
 
     public void setTimerDelay(int delay) {
@@ -148,8 +151,6 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         if (powerUp != null) {
             g.setColor(Color.BLUE);
             g.fillRect(powerUp.getPosition().x, powerUp.getPosition().y, BLOCK_SIZE, BLOCK_SIZE);
-        } else {
-            System.out.println("Power-up is null when trying to draw.");
         }
 
         // Draw game over text if game is over
@@ -179,7 +180,6 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
 
             g.drawString(retryText, retryTextX, retryTextY);
 
-            expirationTimer.start();
         }
     }
 
@@ -288,47 +288,56 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
             // Handle the case where no position was found
             isGameOver = true;
             timer.stop();
-            scorePanel.checkHighScore();
+            scorePanel.checkHighScore(configManager.getHighScore());
             return;
+        }
+        // Stop existing expiration timer (if running) before generating new food or power-up
+        if (expirationTimer != null && expirationTimer.isRunning()) {
+            expirationTimer.stop();
         }
 
         int powerUpChance = random.nextInt(100);
+        if (expirationTimer != null && expirationTimer.isRunning()) {
+            expirationTimer.stop();
+        }
         if (powerUpChance < 10) { // 10% chance to generate a speed power-up
             powerUp = new PowerUp(new Point(x, y), "speed");
             food = null;
-        } else if (powerUpChance < 20) { // 10% chance to generate a double points power-up
+        } else if (powerUpChance < 20) { // 20% chance to generate a double points power-up
             powerUp = new PowerUp(new Point(x, y), "double_points");
             food = null;
         } else {
             food = new Point(x, y);
             powerUp = null;
         }
-
-        // Start the expiration timer (but don't clear food too soon)
+        // Reset the existing timer instead of creating a new one
         startExpirationTimer();
         repaint();
     }
 
     private void startExpirationTimer() {
-        if (expirationTimer != null) {
+        if (expirationTimer == null) {
+            expirationTimer = new Timer(9000, new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    // Ensure we only remove the correct object (food or power-up)
+                    if (food != null) {
+                        food = null;
+                    }
+                    if (powerUp != null) {
+                        powerUp = null;
+                    }
+                    generateFoodOrPowerUp();
+                    repaint();
+                }
+            });
+            expirationTimer.setRepeats(false);
+        } else {
             expirationTimer.stop();
+            expirationTimer.setInitialDelay(9000);
+            expirationTimer.restart();
+
         }
-        expirationTimer = new Timer(9000, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Ensure we only remove the correct object (food or power-up)
-                if (food != null) {
-                    food = null;
-                }
-                if (powerUp != null) {
-                    powerUp = null;
-                }
-                generateFoodOrPowerUp();
-                repaint();
-            }
-        });
-        expirationTimer.setRepeats(false);
-        expirationTimer.start();
     }
 
     private void applyPowerUpEffect(PowerUp powerUp) {
@@ -393,7 +402,11 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
                 isGameOver = true;
                 powerUp = null;
                 timer.stop();
-                scorePanel.checkHighScore();
+                scorePanel.checkHighScore(configManager.getHighScore());
+                if (score > configManager.getHighScore()) {
+                    configManager.setHighScore(score);
+                    configManager.saveProperties();
+                }
                 startGameOverColorChangeTimer();
             }
         }
@@ -421,6 +434,8 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
 
     public void setSnakeColor(Color color) {
         this.snakeColor = color;
+        configManager.setSnakeColor(color);
+        configManager.saveProperties();
         repaint();
     }
 
