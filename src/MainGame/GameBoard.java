@@ -332,6 +332,7 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
     }
 
     private void applyPowerUpEffect(PowerUp powerUp) {
+        resetPowerUpEffect(powerUp);
         switch (powerUp.getType()) {
             case "speed":
                 timer.setDelay(timer.getDelay() / 2);
@@ -342,7 +343,6 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
                 doublePointsActive = true;
                 scorePanel.updatePowerUp("Double Points");
                 break;
-            // Add more power-up types and their effects here
         }
 
         // Start a timer to reset the power-up effect after 7 seconds
