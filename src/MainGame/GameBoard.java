@@ -32,17 +32,23 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
 
     private ScorePanel scorePanel;
     private SettingsDialog settingsDialog;
+    private GameBoard gameBoard;
+    private MenuPanel menuPanel;
 
     private long lastKeyPressTime = 0;
     private final int KEY_PRESS_DELAY = 80;
 
     private Random random = new Random();
 
-    public GameBoard(ScorePanel scorePanel, SettingsDialog settingsDialog) {
+    public GameBoard(ScorePanel scorePanel, SettingsDialog settingsDialog, MenuPanel menuPanel) {
         setPreferredSize(new Dimension(BOARD_WIDTH * BLOCK_SIZE, BOARD_HEIGHT * BLOCK_SIZE));
 
         this.snakeColor = Color.GREEN;
         this.scorePanel = scorePanel;
+        this.settingsDialog = settingsDialog;
+        this.menuPanel = menuPanel;
+        this.gameBoard = this;
+
         this.snake = new ArrayList<>();
         this.snake.add(new Point(50, 50));
         generateFoodOrPowerUp();
@@ -116,7 +122,7 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         super.paintComponent(g);
 
         // Draw grid lines
-        g.setColor(new Color(30,30,30));
+        g.setColor(new Color(30, 30, 30));
         for (int i = 0; i <= getWidth(); i += BLOCK_SIZE) {
             g.drawLine(i, 0, i, getHeight());
         }
@@ -150,16 +156,29 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         if (isGameOver) {
             g.setColor(gameOverTextColor);
             String gameOverText = "Game Over";
+            String retryText = "Press SPACEBAR to Retry";
+
+            // Set font and get FontMetrics for "Game Over" text
             g.setFont(new Font("Helvetica", Font.BOLD, 30));
+            FontMetrics gameOverFm = g.getFontMetrics();
+            int gameOverTextWidth = gameOverFm.stringWidth(gameOverText);
+            int gameOverTextHeight = gameOverFm.getHeight();
 
-            FontMetrics fm = g.getFontMetrics();
-            int textWidth = fm.stringWidth(gameOverText);
-            int textHeight = fm.getHeight();
-
-            int x = (getWidth() - textWidth) / 2;
-            int y = (getHeight() - textHeight) / 2;
+            int x = (getWidth() - gameOverTextWidth) / 2;
+            int y = (getHeight() - gameOverTextHeight) / 2;
 
             g.drawString(gameOverText, x, y);
+
+            // Set font and get FontMetrics for retry text
+            g.setFont(new Font("Helvetica", Font.PLAIN, 20));
+            FontMetrics retryFm = g.getFontMetrics();
+            int retryTextWidth = retryFm.stringWidth(retryText);
+
+            int retryTextX = (getWidth() - retryTextWidth) / 2;
+            int retryTextY = y + gameOverTextHeight + 10; // 10 pixels below the game over text
+
+            g.drawString(retryText, retryTextX, retryTextY);
+
             expirationTimer.start();
         }
     }
@@ -178,14 +197,22 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         public void actionPerformed(ActionEvent e) {
             String difficulty = settingsDialog.getSelectedDifficulty();
             if ("Easy".equals(difficulty)) {
-                setTimerDelay(300);
+                setTimerDelay(60);
             } else if ("Medium".equals(difficulty)) {
-                setTimerDelay(150);
+                setTimerDelay(40);
             } else if ("Hard".equals(difficulty)) {
-                setTimerDelay(75);
+                setTimerDelay(28);
             }
             resetGame();
             requestFocusInWindow();
+        }
+    }
+
+    private class ColorChangeListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            setSnakeColor(settingsDialog.getSelectedColor());
+            repaint();
         }
     }
 
@@ -371,6 +398,7 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
             }
         }
     }
+
     private void startGameOverColorChangeTimer() {
         gameOverColorChangeTimer = new Timer(200, new ActionListener() {
             @Override
@@ -390,6 +418,7 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
             repaint();
         }
     }
+
     public void setSnakeColor(Color color) {
         this.snakeColor = color;
         repaint();
@@ -429,13 +458,12 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         } else if (key == KeyEvent.VK_ESCAPE) {
             SwingUtilities.invokeLater(() -> {
                 if (settingsDialog == null) {
-                    settingsDialog = new SettingsDialog((JFrame) SwingUtilities.getWindowAncestor(this), new RestartButtonListener(), new DifficultyButtonListener(), new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            snakeColor = settingsDialog.getSelectedColor();
-                            repaint();
-                        }
-                    });
+                    settingsDialog = new SettingsDialog(
+                            (JFrame) SwingUtilities.getWindowAncestor(this),
+                            new RestartButtonListener(),
+                            new DifficultyButtonListener(),
+                            new ColorChangeListener()
+                    );
                 }
                 settingsDialog.setVisible(true);
             });

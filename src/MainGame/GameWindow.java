@@ -28,7 +28,7 @@ public class GameWindow {
             e.printStackTrace();
         }
 
-        menuPanel = new MenuPanel(new StartButtonListener(), new SettingsButtonListener());
+        menuPanel = new MenuPanel(new StartButtonListener());
         window.add(menuPanel, BorderLayout.CENTER);
 
         window.pack();
@@ -45,7 +45,7 @@ public class GameWindow {
             if (settingsDialog == null) {
                 settingsDialog = new SettingsDialog(window, new RestartButtonListener(), new DifficultyButtonListener(), new ColorChangeListener());
             }
-            gameBoard = new GameBoard(scorePanel, settingsDialog);
+            gameBoard = new GameBoard(scorePanel, settingsDialog, menuPanel);
 
             // Add the game board and score panel to the window
             window.add(scorePanel, BorderLayout.NORTH);

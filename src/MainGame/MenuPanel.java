@@ -10,9 +10,9 @@ import java.util.Objects;
 
 public class MenuPanel extends JPanel {
     private JButton startButton;
-    private JButton settingsButton;
+    private JButton quitButton;
 
-    public MenuPanel(ActionListener startListener, ActionListener settingsListener) {
+    public MenuPanel(ActionListener startListener) {
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
@@ -54,10 +54,10 @@ public class MenuPanel extends JPanel {
         add(startButton, gbc);
 
         // Settings button
-        settingsButton = new JButton("Settings");
-        settingsButton.addActionListener(settingsListener);
-        gbc.gridy = 4; // Move settings button to row 4
-        add(settingsButton, gbc);
+        quitButton = new JButton("Quit");
+        quitButton.addActionListener(e -> System.exit(0));
+        gbc.gridy = 4; // Move quit button to row 4
+        add(quitButton, gbc);
 
         // Invert colors
         invertColors();
