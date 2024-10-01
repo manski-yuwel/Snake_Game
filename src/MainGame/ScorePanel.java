@@ -1,5 +1,6 @@
 package MainGame;
 
+import java.awt.Font;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
 import java.awt.GridLayout;
@@ -13,11 +14,14 @@ public class ScorePanel extends JPanel {
     private int highScore = 0;
 
     public ScorePanel() {
-        setLayout(new GridLayout(1, 3)); // 1 row, 3 columns
+        setLayout(new GridLayout(1, 3)); // 1 row, 3 columns grid to ensure even spacing
 
         powerUpLabel = new JLabel("Power Up: None", JLabel.CENTER);
+        powerUpLabel.setFont(new Font("Comic Sans MS", Font.BOLD, 17));
         scoreLabel = new JLabel("Score: " + score, JLabel.CENTER);
+        scoreLabel.setFont(new Font("Comic Sans MS", Font.BOLD, 17));
         highScoreLabel = new JLabel("High Score: " + highScore, JLabel.CENTER);
+        highScoreLabel.setFont(new Font("Comic Sans MS", Font.BOLD, 17));
 
         add(powerUpLabel);
         add(scoreLabel);

@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.imageio.ImageIO;
 import java.io.IOException;
+import java.io.InputStream;
 
 public class GameWindow {
     private JFrame window;
@@ -17,13 +18,16 @@ public class GameWindow {
         window = new JFrame("Snake Game");
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setSize(800, 600);
-        window.setResizable(true);
-        window.setLayout(new BorderLayout());
+        window.setLayout(new BorderLayout()); // BorderLayout
 
-        // Load the icon image
         try {
-            Image icon = ImageIO.read(getClass().getResource("/snake.png"));
-            window.setIconImage(icon);
+            InputStream iconStream = getClass().getResourceAsStream("/resources/snake.png");
+            if (iconStream != null) {
+                Image icon = ImageIO.read(iconStream);
+                window.setIconImage(icon);
+            } else {
+                System.err.println("Icon image not found!");
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -32,6 +36,7 @@ public class GameWindow {
         window.add(menuPanel, BorderLayout.CENTER);
 
         window.pack();
+        window.setResizable(false);
         window.setLocationRelativeTo(null);
         window.setVisible(true);
     }
@@ -39,7 +44,7 @@ public class GameWindow {
     private class StartButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            window.remove(menuPanel); // Remove the menu panel when the game starts
+            window.remove(menuPanel); // remove the menu panel when the game starts
 
             ScorePanel scorePanel = new ScorePanel();
             if (settingsDialog == null) {
@@ -47,29 +52,28 @@ public class GameWindow {
             }
             gameBoard = new GameBoard(scorePanel, settingsDialog);
 
-            // Add the game board and score panel to the window
-            window.add(scorePanel, BorderLayout.NORTH);
-            window.add(gameBoard, BorderLayout.CENTER);
+            // add the game board and score panel to the window
+            window.add(scorePanel, BorderLayout.NORTH); // add score panel to north
+            window.add(gameBoard, BorderLayout.CENTER); // add game board to center
 
-            // Pack the window to fit its contents
             window.pack();
 
-            // Get the insets of the JFrame (borders and title bar)
+            // get the insets of the JFrame (borders and title bar)
             Insets insets = window.getInsets();
 
-            // Adjust the window size to account for insets
+            // adjust the window size to account for insets
             int totalWidth = gameBoard.getPreferredSize().width + insets.left + insets.right;
             int totalHeight = gameBoard.getPreferredSize().height + insets.top + insets.bottom;
 
-            // Set the window size to include the game board and insets
+            // set the window size to include the game board and insets
             window.setSize(totalWidth, totalHeight);
 
-            window.setLocationRelativeTo(null); // Re-center the window after resizing
-            window.revalidate(); // Refresh the layout
-            window.repaint();    // Repaint the components
-            window.setResizable(false); // Disable resizing
+            window.setLocationRelativeTo(null); // re-center the window after resizing
+            window.revalidate(); // refresh the layout
+            window.repaint();    // repaint the components
+            window.setResizable(false); // disable resizing
 
-            gameBoard.requestFocusInWindow(); // Ensure the game board has focus for key inputs
+            gameBoard.requestFocusInWindow(); // ensure the game board has focus for key inputs
         }
     }
 

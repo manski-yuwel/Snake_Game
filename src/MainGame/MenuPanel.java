@@ -6,6 +6,7 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Objects;
 
 public class MenuPanel extends JPanel {
@@ -19,10 +20,15 @@ public class MenuPanel extends JPanel {
         gbc.anchor = GridBagConstraints.CENTER;
         gbc.fill = GridBagConstraints.NONE;
 
-        // Load and resize logo
+        // load and resize logo
         BufferedImage logoImage = null;
         try {
-            logoImage = ImageIO.read(Objects.requireNonNull(getClass().getResource("/snake.png")));
+            InputStream imageStream = getClass().getResourceAsStream("/resources/snake.png");
+            if (imageStream != null) {
+                logoImage = ImageIO.read(imageStream);
+            } else {
+                System.err.println("Logo image not found. Skipping image display.");
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -35,34 +41,35 @@ public class MenuPanel extends JPanel {
             add(logoLabel, gbc);
         }
 
-        // Title
+        // title
         JLabel titleLabel = new JLabel("Snake Game");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setFont(new Font("Comic Sans MS", Font.BOLD, 24));
         gbc.gridy = 1; // Move title label to row 1
         add(titleLabel, gbc);
 
-        // Developer credit
+        // developer credit
         JLabel developerLabel = new JLabel("Developed by Emmanuel Clemente");
-        developerLabel.setFont(new Font("Arial", Font.ITALIC, 14));
+        developerLabel.setFont(new Font("Comic Sans MS", Font.ITALIC, 14));
         gbc.gridy = 2; // Move developer label to row 2
         add(developerLabel, gbc);
 
-        // Start button
+        // start button
         startButton = new JButton("Start");
         startButton.addActionListener(startListener);
         gbc.gridy = 3; // Move start button to row 3
         add(startButton, gbc);
 
-        // Settings button
+        // settings button
         quitButton = new JButton("Quit");
         quitButton.addActionListener(e -> System.exit(0));
         gbc.gridy = 4; // Move quit button to row 4
         add(quitButton, gbc);
 
-        // Invert colors
+        // invert colors
         invertColors();
     }
 
+    // method for color inversion
     private void invertColors() {
         setBackground(invertColor(getBackground()));
         for (Component component : getComponents()) {

@@ -12,8 +12,8 @@ import java.util.Random;
 public class GameBoard extends JPanel implements ActionListener, KeyListener {
 
     private final int BLOCK_SIZE = 10;
-    private final int BOARD_WIDTH = 80; // Number of blocks horizontally
-    private final int BOARD_HEIGHT = 50; // Number of blocks vertically
+    private final int BOARD_WIDTH = 80; // number of blocks horizontally
+    private final int BOARD_HEIGHT = 50; // number of blocks vertically
     private ArrayList<Point> snake;
     private Point food;
     private PowerUp powerUp;
@@ -34,11 +34,11 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
     private SettingsDialog settingsDialog;
     private ConfigManager configManager;
 
-    private String currentDifficulty = "Easy"; // Keep track of the current difficulty
+    private String currentDifficulty = "Easy";
     private final int EASY_SPEED = 80;
     private final int MEDIUM_SPEED = 50;
     private final int HARD_SPEED = 30;
-    private String activePowerUpType = null; // Keep track of the active power-up
+    private String activePowerUpType = null;
 
     private long lastKeyPressTime = 0;
     private final int KEY_PRESS_DELAY = 80;
@@ -46,9 +46,11 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
     private Random random = new Random();
 
     public GameBoard(ScorePanel scorePanel, SettingsDialog settingsDialog) {
+        // set board size
         setPreferredSize(new Dimension(BOARD_WIDTH * BLOCK_SIZE, BOARD_HEIGHT * BLOCK_SIZE));
 
-        this.snakeColor = Color.GREEN;
+
+        this.snakeColor = Color.GREEN; // default snake color
         this.scorePanel = scorePanel;
         this.settingsDialog = new SettingsDialog(
                 (JFrame) SwingUtilities.getWindowAncestor(this),
@@ -64,9 +66,8 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         this.snake.add(new Point(50, 50));
         generateFoodOrPowerUp();
 
-        // Initialize the game with the "Easy" speed
-        this.timer = new Timer(EASY_SPEED, this); // Start with "Easy" speed
-        currentDifficulty = "Easy"; // Set current difficulty to "Easy"
+        this.timer = new Timer(EASY_SPEED, this);
+        currentDifficulty = "Easy"; // default difficulty
 
         timer.start();
 
@@ -97,6 +98,7 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         generateFoodOrPowerUp();
     }
 
+    // method for game reset
     public void resetGame() {
 
         // Stop the timer before changing the delay
@@ -117,13 +119,10 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         scorePanel.updateScore(score);
         scorePanel.updatePowerUp("None");
 
-        // Set speed based on the current difficulty
         setSpeedForDifficulty();
 
-        // Start the timer
         timer.start();
 
-        // Stop other timers if necessary
         if (powerUpTimer != null) {
             powerUpTimer.stop();
         }
@@ -137,15 +136,15 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
             gameOverColorChangeTimer.stop();
         }
 
-        // Generate new food or power-up and repaint
         generateFoodOrPowerUp();
         repaint();
         scorePanel.checkHighScore(configManager.getHighScore());
     }
 
+    // speed and difficulty equivalence
     private void setSpeedForDifficulty() {
         timer.stop();
-        // Set the speed based on the current difficulty
+
         switch (currentDifficulty) {
             case "Easy":
                 setTimerDelay(EASY_SPEED);
@@ -163,14 +162,13 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
 
     public void setTimerDelay(int delay) {
         timer.setDelay(delay);
-        System.out.println("Timer delay set to: " + delay + " ms");
+        System.out.println("Timer delay set to: " + delay + " ms"); // indicate speed adjustments
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        // Draw grid lines
         g.setColor(new Color(30, 30, 30));
         for (int i = 0; i <= getWidth(); i += BLOCK_SIZE) {
             g.drawLine(i, 0, i, getHeight());
@@ -179,7 +177,6 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
             g.drawLine(0, i, getWidth(), i);
         }
 
-        // Draw the snake
         if (snake != null) {
             g.setColor(snakeColor);
             for (Point p : snake) {
@@ -187,25 +184,22 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
             }
         }
 
-        // Draw the food (if it exists)
         if (food != null) {
             g.setColor(Color.RED);
             g.fillRect(food.x, food.y, BLOCK_SIZE, BLOCK_SIZE);
         }
 
-        // Draw the power-up (if it exists)
         if (powerUp != null) {
             g.setColor(Color.BLUE);
             g.fillRect(powerUp.getPosition().x, powerUp.getPosition().y, BLOCK_SIZE, BLOCK_SIZE);
         }
 
-        // Draw game over text if game is over
+        // game over screen
         if (isGameOver) {
             g.setColor(gameOverTextColor);
             String gameOverText = "Game Over";
             String retryText = "Press SPACEBAR to Retry";
 
-            // Set font and get FontMetrics for "Game Over" text
             g.setFont(new Font("Helvetica", Font.BOLD, 30));
             FontMetrics gameOverFm = g.getFontMetrics();
             int gameOverTextWidth = gameOverFm.stringWidth(gameOverText);
@@ -216,7 +210,6 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
 
             g.drawString(gameOverText, x, y);
 
-            // Set font and get FontMetrics for retry text
             g.setFont(new Font("Helvetica", Font.PLAIN, 20));
             FontMetrics retryFm = g.getFontMetrics();
             int retryTextWidth = retryFm.stringWidth(retryText);
@@ -260,6 +253,7 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         }
     }
 
+    // snake movement binds
     private void moveSnake() {
         Point head = snake.get(0);
         Point newHead = new Point(head);
@@ -279,17 +273,17 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
                 break;
         }
 
-        // Handle wrapping around based on the number of blocks (not pixels)
+        // wrapping around based on the number of blocks
         if (newHead.x < 0) {
-            newHead.x = (BOARD_WIDTH - 1) * BLOCK_SIZE; // Wrap to the rightmost block
+            newHead.x = (BOARD_WIDTH - 1) * BLOCK_SIZE;
         } else if (newHead.x >= BOARD_WIDTH * BLOCK_SIZE) {
-            newHead.x = 0; // Wrap to the leftmost block
+            newHead.x = 0;
         }
 
         if (newHead.y < 0) {
-            newHead.y = (BOARD_HEIGHT - 1) * BLOCK_SIZE; // Wrap to the bottom block
+            newHead.y = (BOARD_HEIGHT - 1) * BLOCK_SIZE;
         } else if (newHead.y >= BOARD_HEIGHT * BLOCK_SIZE) {
-            newHead.y = 0; // Wrap to the top block
+            newHead.y = 0;
         }
 
         snake.add(0, newHead);
@@ -307,8 +301,8 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         }
     }
 
+    // food and power-up generation
     private void generateFoodOrPowerUp() {
-        // Define the boundaries for spawning based on the window size
         int minX = 0;
         int minY = 0;
         int maxX = getWidth() - BLOCK_SIZE;
@@ -318,7 +312,7 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         int attempts = 0;
         boolean positionFound = false;
 
-        while (attempts < 100) { // Limit the number of attempts to find a position
+        while (attempts < 100) {
             x = minX + (int) (Math.random() * ((maxX - minX + BLOCK_SIZE) / BLOCK_SIZE)) * BLOCK_SIZE;
             y = minY + (int) (Math.random() * ((maxY - minY + BLOCK_SIZE) / BLOCK_SIZE)) * BLOCK_SIZE;
             if (!snake.contains(new Point(x, y))) {
@@ -329,7 +323,7 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         }
 
         if (!positionFound) {
-            // Handle the case where no position was found
+            // if no position is found, game is over
             isGameOver = true;
             timer.stop();
             scorePanel.checkHighScore(configManager.getHighScore());
@@ -385,12 +379,12 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
     }
 
     private void applyPowerUpEffect(PowerUp powerUp) {
-        // Reset the effect of any previously active power-up
+        // reset the effect of any previously active power-up
         if (activePowerUpType != null) {
             resetPowerUpEffect(activePowerUpType);
         }
 
-        // Set the new active power-up type
+        // set the new active power-up type
         activePowerUpType = powerUp.getType();
 
         switch (powerUp.getType()) {
@@ -405,7 +399,7 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
                 break;
         }
 
-        // Start a timer to reset the power-up effect after 7 seconds
+        // start a timer to reset the power-up effect after 7 seconds
         powerUpTimer = new Timer(7000, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -421,11 +415,11 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
     private void resetPowerUpEffect(String powerUpType) {
         switch (powerUpType) {
             case "speed":
-                setSpeedForDifficulty(); // Restore speed to the current difficulty setting
+                setSpeedForDifficulty(); // restore speed to the current difficulty setting
                 if (colorChangeTimer != null) {
                     colorChangeTimer.stop();
                 }
-                snakeColor = configManager.getSnakeColor(); // Reset snake color to original
+                snakeColor = configManager.getSnakeColor(); // reset snake color to original
                 break;
             case "double_points":
                 doublePointsActive = false;
@@ -434,6 +428,7 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         scorePanel.updatePowerUp("None");
     }
 
+    // timer for snake color changing
     private void startColorChangeTimer() {
         colorChangeTimer = new Timer(200, new ActionListener() {
             @Override
@@ -445,6 +440,7 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         colorChangeTimer.start();
     }
 
+    // collision checker
     private void checkCollision() {
         Point head = snake.get(0);
 
@@ -463,6 +459,7 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         }
     }
 
+    // timer for game over text changing color
     private void startGameOverColorChangeTimer() {
         gameOverColorChangeTimer = new Timer(200, new ActionListener() {
             @Override
@@ -483,6 +480,7 @@ public class GameBoard extends JPanel implements ActionListener, KeyListener {
         }
     }
 
+    // method for snake color and saving to config
     public void setSnakeColor(Color color) {
         this.snakeColor = color;
         configManager.setSnakeColor(color);
