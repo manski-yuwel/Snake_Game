@@ -23,7 +23,7 @@ public class MenuPanel extends JPanel {
         // load and resize logo
         BufferedImage logoImage = null;
         try {
-            InputStream imageStream = getClass().getResourceAsStream("/resources/snake.png");
+            InputStream imageStream = getClass().getResourceAsStream("/snake.png");
             if (imageStream != null) {
                 logoImage = ImageIO.read(imageStream);
             } else {

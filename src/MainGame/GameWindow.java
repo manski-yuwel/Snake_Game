@@ -21,7 +21,7 @@ public class GameWindow {
         window.setLayout(new BorderLayout()); // BorderLayout
 
         try {
-            InputStream iconStream = getClass().getResourceAsStream("/resources/snake.png");
+            InputStream iconStream = getClass().getResourceAsStream("/snake.png");
             if (iconStream != null) {
                 Image icon = ImageIO.read(iconStream);
                 window.setIconImage(icon);
